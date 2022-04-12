@@ -16,7 +16,8 @@ spark = SparkSession.builder \
          .appName('PySparkKinesis') \
          .getOrCreate()
 
-df_countries = spark.read.format("jdbc").option("url", "jdbc:mysql://database-1.cxxzuzxqj9zm.us-east-1.rds.amazonaws.com:3306/jobs_project") \
+df_countries = spark.read.format("jdbc")\
+    .option("url", "jdbc:mysql://database-1.cxxzuzxqj9zm.us-east-1.rds.amazonaws.com:3306/jobs_project") \
     .option("driver", "com.mysql.jdbc.Driver").option("dbtable", "CountryCode") \
     .option("user", "root").option("password", "root1234").load()
 
@@ -28,8 +29,8 @@ kinesis = spark \
         .option('streamName', stream_name) \
         .option('endpointUrl', 'https://kinesis.us-east-1.amazonaws.com')\
         .option('region', 'us-east-1') \
-        .option('awsAccessKeyId', 'AKIA46BTIN36GXJUOGFO') \
-        .option('awsSecretKey', '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') \
+        .option('awsAccessKeyId', '') \
+        .option('awsSecretKey', '') \
         .option('startingposition', 'TRIM_HORIZON')\
         .load()
 
