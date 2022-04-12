@@ -4,7 +4,7 @@ import pymysql
 import pandas as pd
 
 # rds settings
-rds_host = "database-1.cxxzuzxqj9zm.us-east-1.rds.amazonaws.com"
+rds_host = "d"
 name = 'root'
 password = 'root1234'
 db_name = 'jobs_project'

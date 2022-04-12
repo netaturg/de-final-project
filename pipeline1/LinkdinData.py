@@ -18,7 +18,7 @@ headers = {
     "X-RapidAPI-Key": "82af967b7amshd2264160ab0b289p1f7ffejsn6677f3b5bf4f"
 }
 
-session = boto3.session.Session(aws_access_key_id= 'AKIA46BTIN36GXJUOGFO', aws_secret_access_key= '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',region_name='us-east-1')
+session = boto3.session.Session(aws_access_key_id= '', aws_secret_access_key= '',region_name='us-east-1')
 kinesisPub = KinesisPub('linkdin-raw-data', session)
 
 def kinesis_send_data(stream_name, kinesis_client, jobs):

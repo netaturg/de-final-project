@@ -5,8 +5,8 @@ import boto3
 from kinesis.KinesisPub import KinesisPub
 from kinesis.KinesisSub import KinesisSub
 
-session = boto3.session.Session(aws_access_key_id='AKIA46BTIN36GXJUOGFO',
-                                aws_secret_access_key='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',
+session = boto3.session.Session(aws_access_key_id='',
+                                aws_secret_access_key='',
                                 region_name='us-east-1')
 kinesisPub = KinesisPub('clean-data', session)
 kinesisSub = KinesisSub('linkdin-raw-data', session)

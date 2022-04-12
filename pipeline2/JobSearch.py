@@ -10,16 +10,16 @@ from pipeline2.Crawel import Crawler
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-session = boto3.session.Session(aws_access_key_id='AKIA46BTIN36GXJUOGFO',
-                                aws_secret_access_key='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',
+session = boto3.session.Session(aws_access_key_id='',
+                                aws_secret_access_key='',
                                 region_name='us-east-1')
 
 kinesisPub = KinesisPub('boo', session)
 kinesisSub = KinesisSub('moo')
 
 def preppare_answer(job):
-    aws_access_key = "AKIA46BTIN36GXJUOGFO"
-    aws_secret_key = "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"
+    aws_access_key = ""
+    aws_secret_key = ""
     schema_name = "mydatabase"
     today = date.today()
     s3_staging_dir = "s3://stack-overflow-neta/jobs/{}".format(today)
