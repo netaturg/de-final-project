@@ -7,31 +7,36 @@ from pyspark.sql.types import StructField, StructType, StringType, IntegerType
 import boto3
 import json
 from datetime import date
+import configparser
 
-client = boto3.client('kinesis')
 
-#country code.
-country_code_url = "jdbc:mysql://database-1.cxxzuzxqj9zm.us-east-1.rds.amazonaws.com:3306/jobs_project"
-dbtable = "CountryCode"
-user = "root"
-password = "root1234"
+config = configparser.ConfigParser()
+config.read('app.properties')
+# RDS
+rds_host = config.get("rds", "rds_host")
+rds_user_name = config.get("rds", "rds_name")
+rds_password = config.get("rds", "rds_password")
+rds_db_name = config.get("rds", "rds_db_name")
+rds_table_name = config.get("rds", "rds_table_name")
 
 #stream
-stream_format = 'kinesis'
-stream_name='clean-data'
-endpointUrl = 'https://kinesis.us-east-1.amazonaws.com'
-region = 'us-east-1'
-awsAccessKeyId = ''
-awsSecretKey = ''
-startingposition = 'TRIM_HORIZON'
+stream_format = config.get("kinesis", "stream_format")
+stream_name = config.get("kinesis", "webScraping_kinesis_pub")
+endpoint_url = config.get("kinesis", "endpoint_url")
+
+# aws
+aws_access_key_id = config.get("aws", "aws_access_key_id")
+aws_secret_access_key = config.get("aws", "aws_secret_access_key")
+region_name = config.get("aws", "region_name")
+startingposition = config.get("aws", "startingposition")
 
 #s3
 current_date = date.today()
-mode = "append"
-s3_format = "json"
-processingTime = '30 seconds'
-s3_path = "s3a://stack-overflow-neta/jobs/{}"
-s3_checkpointLocation = "s3a://stack-overflow-neta/checkpoint"
+mode = config.get("s3", "mode")
+s3_format = config.get("s3", "s3_format")
+processing_time = config.get("s3", "processing_time")
+s3_path = config.get("s3", "s3_path")
+s3_checkpoint_location = config.get("s3", "s3_checkpoint_location")
 
 spark = SparkSession.builder \
          .master('local[*]') \
@@ -39,9 +44,9 @@ spark = SparkSession.builder \
          .getOrCreate()
 
 df_countries = spark.read.format("jdbc")\
-    .option("url", country_code_url) \
-    .option("driver", "com.mysql.jdbc.Driver").option("dbtable", dbtable) \
-    .option("user", user).option("password", password).load()
+    .option("url", rds_host) \
+    .option("driver", "com.mysql.jdbc.Driver").option("dbtable", rds_table_name) \
+    .option("user", rds_user_name).option("password", rds_password).load()
 
 df_countries.printSchema()
 
@@ -49,10 +54,10 @@ kinesis = spark \
         .readStream \
         .format(stream_format) \
         .option('streamName', stream_name) \
-        .option('endpointUrl', endpointUrl)\
-        .option('region', region) \
-        .option('awsAccessKeyId', awsAccessKeyId) \
-        .option('awsSecretKey', awsSecretKey) \
+        .option('endpointUrl', endpoint_url)\
+        .option('region', region_name) \
+        .option('awsAccessKeyId', aws_access_key_id) \
+        .option('awsSecretKey', aws_secret_access_key) \
         .option('startingposition', startingposition)\
         .load()
 
@@ -81,11 +86,10 @@ df = df.join(df_countries ,df.country == df_countries.Code ,"left")\
 df.writeStream \
         .outputMode(mode) \
         .format(s3_format) \
-        .trigger(processingTime=processingTime) \
-        .repartition(1)\
+        .trigger(processingTime=processing_time) \
         .option("path", s3_path.format(current_date)) \
         .option("header", True) \
-        .option("checkpointLocation", s3_checkpointLocation) \
+        .option("checkpointLocation", s3_checkpoint_location) \
         .start() \
         .awaitTermination()
 

@@ -3,46 +3,54 @@ import requests
 import random
 import boto3
 import logging
-
+import configparser
 from kinesis.KinesisPub import KinesisPub
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 NEW_LINE = '\n'
-file_path = "linkdinjobs.json"
-url = "https://job-search4.p.rapidapi.com/linkedin/search"
 
-headers = {
-    "X-RapidAPI-Host": "job-search4.p.rapidapi.com",
-    "X-RapidAPI-Key": "82af967b7amshd2264160ab0b289p1f7ffejsn6677f3b5bf4f"
-}
+class API :
+    def __init__(self, website_name):
+        config = configparser.ConfigParser()
+        config.read('app.properties')
+        # Linkdin
+        self.url = config.get(website_name, "url")
+        headers = config.get(website_name, "headers")
+        self.headers = json.loads(str(headers))
+        #aws
+        aws_access_key_id=config.get("aws", "aws_access_key_id")
+        aws_secret_access_key = config.get("aws", "aws_secret_access_key")
+        region_name = config.get("aws", "region_name")
+        #kinesis
+        kinesis_pub=config.get("kinesis", "linkdin_kinesis_pub")
 
-session = boto3.session.Session(aws_access_key_id= '', aws_secret_access_key= '',region_name='us-east-1')
-kinesisPub = KinesisPub('linkdin-raw-data', session)
+        self.session = boto3.session.Session(aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
+        self.kinesisPub = KinesisPub(kinesis_pub, self.session)
 
-def kinesis_send_data(stream_name, kinesis_client, jobs):
-    for j in jobs:
-        partition_key = random.randrange(999, 10000)
-        kinesis_client.put_record(StreamName=stream_name, Data=json.dumps(j), PartitionKey=str(partition_key))
-
-
-def request(i, client):
-    querystring = {"page":"{}".format(i)}
-    jobs = requests.request("GET", url, headers=headers, params=querystring)
-    resp = json.loads(jobs.text)
-    resp = resp["jobs"]
-    logger.info("Publish MSG")
-
-    for j in resp:
-        kinesisPub.kinesis_send_data(j)
+    def kinesis_send_data(stream_name, kinesis_client, jobs):
+        for j in jobs:
+            partition_key = random.randrange(999, 10000)
+            kinesis_client.put_record(StreamName=stream_name, Data=json.dumps(j), PartitionKey=str(partition_key))
 
 
-def lambda_handler(event, context):
-    client = session.client('kinesis')
+    def request(self, i):
+        querystring = {"page":"{}".format(i)}
+        resp = requests.request("GET", self.url, headers=self.headers, params=querystring)
+        jobs = json.loads(resp.text)
+        jobs = jobs["jobs"]
+        logger.info("Publish MSG")
+
+        for job in jobs:
+            self.kinesisPub.kinesis_send_data(job)
+
+
+def lambda_handler(self, event, context):
+    linkdin_api = API("linkdin")
 
     for i in range (6):
-        request(i, client)
+        linkdin_api.request(i)
 
     return {
         'statusCode': 200

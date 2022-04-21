@@ -5,21 +5,32 @@ from kinesis.KinesisPub import KinesisPub
 from datetime import date
 import boto3
 from Json import Json
+import configparser
 
-# rds settings
-rds_host = "database-1.cxxzuzxqj9zm.us-east-1.rds.amazonaws.com"
-name = 'root'
-password = 'root1234'
-db_name = 'jobs_project'
+config = configparser.ConfigParser()
+config.read('app.properties')
 
+# RDS
+rds_host = config.get("rds", "rds_host")
+rds_user_name = config.get("rds", "rds_name")
+rds_password = config.get("rds", "rds_password")
+rds_db_name = config.get("rds", "rds_db_name")
+
+# aws
+aws_access_key_id = config.get("aws", "aws_access_key_id")
+aws_secret_access_key = config.get("aws", "aws_secret_access_key")
+region_name = config.get("aws", "region_name")
+
+# kinesis
+kinesis_pub = config.get("kinesis", "users_details_pub")
+
+session = boto3.session.Session(aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key,
+                                region_name=region_name)
+kinesisPub = KinesisPub(kinesis_pub, session)
+
+# logger
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-session = boto3.session.Session(aws_access_key_id='',
-                                aws_secret_access_key='',
-                                region_name='us-east-1')
-kinesisPub = KinesisPub('moo', session)
-
 
 def query(conn):
     logger.info("in insert_row")
@@ -42,7 +53,7 @@ def query(conn):
 def lambda_handler(event, context):
     logger.info("In here!")
     try:
-        conn = pymysql.connect(host=rds_host, user=name, passwd=password, db=db_name, connect_timeout=5)
+        conn = pymysql.connect(host=rds_host, user=rds_user_name, passwd=rds_password, db=rds_db_name, connect_timeout=5)
     except pymysql.MySQLError as e:
         logger.error("ERROR: Unexpected error: Could not connect to MySQL instance.")
         print("ERROR: Unexpected error: Could not connect to MySQL instance.")

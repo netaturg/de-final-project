@@ -1,6 +1,7 @@
 import boto3
 import pandas as pd
 from time import sleep
+from datetime import date
 
 class AthenaQueryFailed(Exception):
     pass
@@ -83,12 +84,13 @@ class Athena:
             print(str(err))
 
     def create_query(self, location, employment_type, description):
-        string_where = f"where lower(city) like lower('%{location}%')"
-        # string_where = f"where lower(city) like lower('%{location}%') and lower(description) like" \
-        #                 f" lower('%{description}%')"
+        string_where = f"where lower(city) like lower('%{location}%') and lower(description) like" \
+                        f" lower('%{description}%')"
         return string_where
 
     def do_query(self, location, employment_type, description):
-        self.result_df = self.read(f'SELECT distinct * FROM python_2022_04_11 '
+        current_date= str(date.today()).replace("-", "_")
+        print(current_date)
+        self.result_df = self.read(f'SELECT distinct * FROM python_2022_04_20 '
                                    f'{self.create_query(location, employment_type, description)}')
         print("Successfully do_query")

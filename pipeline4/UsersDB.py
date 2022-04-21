@@ -3,12 +3,20 @@ import pymysql
 import json
 from kinesis.KinesisSub import KinesisSub
 from datetime import date
+import configparser
 
-# rds settings
-rds_host = "database-1.cxxzuzxqj9zm.us-east-1.rds.amazonaws.com"
-name = 'root'
-password = 'root1234'
-db_name = 'jobs_project'
+config = configparser.ConfigParser()
+config.read('app.properties')
+
+# RDS
+rds_host = config.get("rds", "rds_host")
+rds_user_name = config.get("rds", "rds_name")
+rds_password = config.get("rds", "rds_password")
+rds_db_name = config.get("rds", "rds_db_name")
+
+# kinesis
+users_db_stream = config.get("kinesis", "users_db_stream")
+kinesisSub = KinesisSub(users_db_stream)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -19,7 +27,8 @@ def insert_row(conn, name, user_id, location, employment_type, description):
     try:
         with conn.cursor() as cur:
             current_date = date.today()
-            query = 'insert into Users (name, user_id, location, employment_type, description, date) values("{}", "{}", "{}", "{}", "{}", "{}")'.format(
+            query = 'insert into Users (name, user_id, location, employment_type, description, date) /' \
+                    'values("{}", "{}", "{}", "{}", "{}", "{}")'.format(
                 name, user_id, location, employment_type, description, current_date)
             print(query)
             cur.execute(query)
@@ -32,10 +41,10 @@ def insert_row(conn, name, user_id, location, employment_type, description):
 
 
 def lambda_handler(event, context):
-    kinesisSub = KinesisSub('foo')
+
 
     try:
-        conn = pymysql.connect(host=rds_host, user=name, passwd=password, db=db_name, connect_timeout=5)
+        conn = pymysql.connect(host=rds_host, user=rds_user_name, passwd=rds_password, db=rds_db_name, connect_timeout=5)
     except pymysql.MySQLError as e:
         logger.error("ERROR: Unexpected error: Could not connect to MySQL instance.")
         logger.error(e)

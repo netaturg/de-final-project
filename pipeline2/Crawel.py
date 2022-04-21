@@ -1,6 +1,7 @@
 import boto3
 import time
 import timeit
+from datetime import date
 
 class Crawler():
 
@@ -54,7 +55,7 @@ class Crawler():
             try:
                 response = self.client.create_crawler(
                     Name=self.crawler_name,
-                    Role='new-role',
+                    Role='admin-role',
                     DatabaseName=self.schema_name,
                     Targets={
                         'S3Targets': [
@@ -63,6 +64,7 @@ class Crawler():
                             }
                         ]
                     },
+                    Configuration="{\"Version\":1.0,\"Grouping\":{\"TableGroupingPolicy\":\"CombineCompatibleSchemas\"}}",
                     TablePrefix='python_'
                 )
                 print("Successfully created crawler")
@@ -78,7 +80,7 @@ class Crawler():
             table_list = response['TableList']
             check_exists = False
             for t in table_list:
-                if t['Name'] == 'python_old':
+                if t['Name'] == 'python_2022_04_20':
                     check_exists = True
 
             print("check_exists_table  " + str(check_exists))
